@@ -1,68 +1,124 @@
-# AI Chat App
+# Kerdos AI Chat Application
 
-A modern AI chat application built with Next.js, MongoDB, and Cloudflare Workers AI.
+A real-time AI chat application built with React, Node.js, and MongoDB.
 
 ## Features
 
-- User authentication (register, login, logout)
-- Real-time chat with AI assistant
-- Message history
-- Modern UI with ShadcN UI components
-- Secure password hashing
-- JWT-based authentication
-- MongoDB for data persistence
+- Real-time chat interface with AI
+- User authentication with Auth0
+- Modern UI with ShadcnUI components
+- Secure API with JWT authentication
+- MongoDB for persistent storage
 
 ## Tech Stack
 
-- **Frontend**: Next.js, React, TypeScript, TailwindCSS, ShadcN UI
-- **Backend**: Next.js API Routes
-- **Database**: MongoDB with Mongoose
-- **AI**: Cloudflare Workers AI (Llama 2)
-- **Authentication**: JWT, bcrypt
+### Frontend
+- React with TypeScript
+- ShadcnUI components
+- Auth0 for authentication
+- Deployed on Netlify
 
-## Getting Started
+### Backend
+- Node.js with Express
+- MongoDB Atlas
+- JWT authentication
+- Deployed on Render
 
-1. Clone the repository
+## Setup Instructions
+
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- MongoDB Atlas account
+- Auth0 account
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
 2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the values:
-     - `MONGODB_URI`: Your MongoDB connection string
-     - `JWT_SECRET`: A secure secret for JWT signing
-     - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
+3. Create a `.env` file with the following variables:
+   ```
+   PORT=5000
+   NODE_ENV=development
+   MONGODB_URI=your_mongodb_uri
+   AUTH0_DOMAIN=your_auth0_domain
+   AUTH0_AUDIENCE=your_auth0_audience
+   CORS_ORIGIN=your_frontend_url
+   ```
 
-4. Run the development server:
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+### Frontend Setup
 
-## API Endpoints
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
 
-- `POST /api/auth/register` - Create a new user account
-- `POST /api/auth/login` - Authenticate user and get JWT token
-- `POST /api/chat` - Send message to AI and get response
-- `GET /api/chat/history` - Get user's chat history
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file with the following variables:
+   ```
+   VITE_AUTH0_DOMAIN=your_auth0_domain
+   VITE_AUTH0_CLIENT_ID=your_auth0_client_id
+   VITE_API_URL=your_backend_url
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Deployment
+
+### Frontend (Netlify)
+1. Connect your GitHub repository to Netlify
+2. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+3. Add environment variables in Netlify dashboard
+
+### Backend (Render)
+1. Create a new Web Service in Render
+2. Connect your GitHub repository
+3. Configure build settings:
+   - Build command: `npm install`
+   - Start command: `npm start`
+4. Add environment variables in Render dashboard
 
 ## Environment Variables
 
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - Secret key for JWT signing
-- `CLOUDFLARE_API_TOKEN` - Cloudflare API token for AI access
+### Backend (.env)
+```
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://bhaskarvilles:zGuGLAZDdum0v2E5@aichatapp.iz5v9.mongodb.net/?retryWrites=true&w=majority&appName=aichatapp
+AUTH0_DOMAIN=kerdos.us.auth0.com
+AUTH0_AUDIENCE=https://ai-chat-backend-ujxv.onrender.com
+CORS_ORIGIN=https://ai-chat-kerdos.netlify.app
+```
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Frontend (.env)
+```
+VITE_AUTH0_DOMAIN=kerdos.us.auth0.com
+VITE_AUTH0_CLIENT_ID=epVtYDnsu25qv73N67doIz3IxxQSak1b
+VITE_API_URL=https://ai-chat-backend-ujxv.onrender.com
+```
 
 ## License
 
-This project is licensed under the MIT License. 
+ISC 
