@@ -1,53 +1,43 @@
 import mongoose from 'mongoose';
 
 export interface IMessage extends mongoose.Document {
-  userId: mongoose.Types.ObjectId;
-  chatId: mongoose.Types.ObjectId;
   content: string;
   role: 'user' | 'assistant';
-  isEdited: boolean;
-  reactions: {
-    emoji: string;
-    userId: mongoose.Types.ObjectId;
-  }[];
   createdAt: Date;
+  chatId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
 }
 
 const messageSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  chatId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Chat',
-    required: true,
-  },
   content: {
     type: String,
-    required: true,
+    required: [true, 'Message content is required'],
   },
   role: {
     type: String,
     enum: ['user', 'assistant'],
-    required: true,
+    required: [true, 'Message role is required'],
   },
-  isEdited: {
-    type: Boolean,
-    default: false,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    immutable: true,
   },
-  reactions: [{
-    emoji: String,
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  }],
-}, {
-  timestamps: true,
+  chatId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Chat',
+    required: [true, 'Chat ID is required'],
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User ID is required'],
+  },
 });
 
-export const Message = mongoose.models.Message || mongoose.model<IMessage>('Message', messageSchema);
+// Index for faster queries
+messageSchema.index({ chatId: 1, createdAt: 1 });
+messageSchema.index({ userId: 1 });
 
-export default Message; 
+export const MessageModel = mongoose.models.Message || mongoose.model<IMessage>('Message', messageSchema);
+export default MessageModel; 
