@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
+import { UserModel } from '@/models/User';
 import { verifyToken } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 
@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
     const { name, email, currentPassword, newPassword } = await request.json();
 
     // Find user
-    const user = await User.findById(decoded.id);
+    const user = await UserModel.findById(decoded.id);
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -40,7 +40,7 @@ export async function PUT(request: Request) {
 
     // Check if email is taken by another user
     if (email !== user.email) {
-      const existingUser = await User.findOne({ email });
+      const existingUser = await UserModel.findOne({ email });
       if (existingUser) {
         return NextResponse.json(
           { error: 'Email already in use' },

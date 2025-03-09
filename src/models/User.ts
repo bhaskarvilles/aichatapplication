@@ -51,7 +51,7 @@ userSchema.pre('save', async function(next) {
   try {
     if (!this.isModified('password')) return next();
     
-    const salt = await bcrypt.genSalt(12); // Increased from 10 to 12 rounds
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
@@ -62,7 +62,6 @@ userSchema.pre('save', async function(next) {
 // Method to compare password for login
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    // Need to select password since it's excluded by default
     const user = await (this as any).constructor.findById(this._id).select('+password');
     if (!user) return false;
     
@@ -80,4 +79,5 @@ userSchema.methods.toJSON = function() {
   return obj;
 };
 
-export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema); 
+export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+export default UserModel; 
