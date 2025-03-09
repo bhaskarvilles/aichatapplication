@@ -7,4 +7,13 @@
   NODE_VERSION = "18"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs" 
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  NEXT_PUBLIC_AUTH0_DOMAIN = "kerdos.us.auth0.com"
+  NEXT_PUBLIC_AUTH0_CLIENT_ID = "epVtYDnsu25qv73N67doIz3IxxQSak1b" 

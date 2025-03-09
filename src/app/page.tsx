@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { ChatInterface } from '@/components/ChatInterface';
 import { LoginForm } from '@/components/LoginForm';
-import { RegisterForm } from '@/components/RegisterForm';
 import { UserProfile } from '@/components/UserProfile';
 import { Button } from '@/components/ui/button';
 import { Toaster } from 'sonner';
@@ -16,71 +15,55 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
-  const { user, logout } = useAuth();
-  const [showLogin, setShowLogin] = useState(true);
+  const { user, logout, isLoading } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
-  const router = useRouter();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <div className="mb-8 w-full max-w-md">
-          <h1 className="text-4xl font-bold text-center mb-2">AI Chat App</h1>
-          <p className="text-gray-600 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="mb-8 w-full max-w-md text-center">
+          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
+            AI Chat App
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Chat with an AI assistant powered by Cloudflare Workers AI
           </p>
         </div>
         <div className="w-full max-w-md">
-          {showLogin ? (
-            <div className="space-y-4">
-              <LoginForm />
-              <p className="text-center text-sm text-gray-600">
-                Don't have an account?{' '}
-                <button
-                  onClick={() => setShowLogin(false)}
-                  className="text-blue-600 hover:underline transition-colors"
-                >
-                  Register
-                </button>
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <RegisterForm />
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{' '}
-                <button
-                  onClick={() => setShowLogin(true)}
-                  className="text-blue-600 hover:underline transition-colors"
-                >
-                  Login
-                </button>
-              </p>
-            </div>
-          )}
+          <LoginForm />
+        </div>
+        <div className="mt-8">
+          <ThemeToggle />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold">AI Chat App</h1>
-              <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
+              <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
                 Beta
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 hidden sm:inline">
+              <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
                 Welcome, {user.name}
               </span>
               <TooltipProvider>
@@ -93,7 +76,7 @@ export default function Home() {
                         setShowProfile(false);
                         setShowSubscription(true);
                       }}
-                      className={`transition-transform hover:scale-105 ${showSubscription && 'text-blue-600'}`}
+                      className={`transition-transform hover:scale-105 ${showSubscription && 'text-blue-600 dark:text-blue-400'}`}
                     >
                       <Crown className="h-5 w-5" />
                     </Button>
@@ -110,7 +93,7 @@ export default function Home() {
                   setShowProfile(true);
                   setShowSubscription(false);
                 }}
-                className={`transition-transform hover:scale-105 ${showProfile && !showSubscription && 'text-blue-600'}`}
+                className={`transition-transform hover:scale-105 ${showProfile && !showSubscription && 'text-blue-600 dark:text-blue-400'}`}
               >
                 <Settings className="h-5 w-5" />
               </Button>
@@ -121,14 +104,15 @@ export default function Home() {
                   setShowProfile(false);
                   setShowSubscription(false);
                 }}
-                className={`transition-transform hover:scale-105 ${!showProfile && !showSubscription && 'text-blue-600'}`}
+                className={`transition-transform hover:scale-105 ${!showProfile && !showSubscription && 'text-blue-600 dark:text-blue-400'}`}
               >
                 <MessageSquare className="h-5 w-5" />
               </Button>
+              <ThemeToggle />
               <Button
                 variant="outline"
-                onClick={logout}
-                className="transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                onClick={() => logout()}
+                className="transition-colors hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700"
               >
                 Logout
               </Button>
