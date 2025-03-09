@@ -1,40 +1,48 @@
 import mongoose from 'mongoose';
 
+export interface ISubscription extends mongoose.Document {
+  userId: mongoose.Types.ObjectId;
+  plan: 'basic' | 'pro' | 'enterprise';
+  status: 'active' | 'cancelled' | 'expired';
+  startDate: Date;
+  endDate: Date;
+  paymentId?: string;
+}
+
 const subscriptionSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: [true, 'User ID is required'],
   },
-  planId: {
+  plan: {
     type: String,
-    required: true,
+    enum: ['basic', 'pro', 'enterprise'],
+    required: [true, 'Subscription plan is required'],
   },
   status: {
     type: String,
     enum: ['active', 'cancelled', 'expired'],
     default: 'active',
   },
-  razorpaySubscriptionId: {
-    type: String,
-    required: true,
-  },
   startDate: {
     type: Date,
-    required: true,
+    default: Date.now,
   },
   endDate: {
     type: Date,
-    required: true,
+    required: [true, 'Subscription end date is required'],
   },
-  features: {
-    type: [String],
-    default: [],
+  paymentId: {
+    type: String,
   },
 }, {
   timestamps: true,
 });
 
-const Subscription = mongoose.models.Subscription || mongoose.model('Subscription', subscriptionSchema);
+// Index for faster queries
+subscriptionSchema.index({ userId: 1, status: 1 });
+subscriptionSchema.index({ endDate: 1 }, { expireAfterSeconds: 0 });
 
-export default Subscription; 
+export const SubscriptionModel = mongoose.models.Subscription || mongoose.model<ISubscription>('Subscription', subscriptionSchema);
+export default SubscriptionModel; 

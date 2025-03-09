@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import connectDB from '@/lib/db';
-import Message from '@/models/Message';
+import { MessageModel } from '@/models/Message';
 import { generateChatResponse } from '@/lib/openai';
 
 export async function POST(request: Request) {
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const { message } = await request.json();
 
     // Create user message
-    const userMessage = new Message({
+    const userMessage = new MessageModel({
       content: message,
       role: 'user',
       userId: decoded.id,
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       const aiResponse = await generateChatResponse(message);
 
       // Save AI response
-      const assistantMessage = new Message({
+      const assistantMessage = new MessageModel({
         content: aiResponse,
         role: 'assistant',
         userId: decoded.id,
@@ -63,6 +63,50 @@ export async function POST(request: Request) {
     console.error('Chat error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const headersList = new Headers(request.headers);
+    const token = headersList.get('authorization')?.split(' ')[1];
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || !decoded.id) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    await connectDB();
+
+    const messages = await MessageModel.find({ userId: decoded.id })
+      .sort({ createdAt: -1 })
+      .select('_id content role createdAt')
+      .exec();
+
+    return NextResponse.json({
+      messages: messages.map(msg => ({
+        id: msg._id.toString(),
+        content: msg.content,
+        role: msg.role,
+        createdAt: msg.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch messages' },
       { status: 500 }
     );
   }

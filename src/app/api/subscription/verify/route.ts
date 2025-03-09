@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { connectDB } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
-import { verifySubscription } from '@/lib/razorpay';
-import connectDB from '@/lib/db';
-import Subscription from '@/models/Subscription';
+import { SubscriptionModel } from '@/models/Subscription';
 
 export async function POST(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -25,25 +23,26 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
+    const { paymentId } = await request.json();
 
-    const { razorpaySignature, subscriptionId } = await request.json();
-    
-    // Verify the payment signature
-    const isValid = await verifySubscription(razorpaySignature, subscriptionId);
-
-    if (!isValid) {
+    if (!paymentId) {
       return NextResponse.json(
-        { error: 'Invalid signature' },
+        { error: 'Payment ID is required' },
         { status: 400 }
       );
     }
 
-    // Update subscription status
-    const subscription = await Subscription.findOne({
-      razorpaySubscriptionId: subscriptionId,
-      userId: decoded.id,
-    });
+    await connectDB();
+
+    const subscription = await SubscriptionModel.findOneAndUpdate(
+      {
+        userId: decoded.id,
+        paymentId,
+        status: 'active',
+      },
+      { status: 'active' },
+      { new: true }
+    );
 
     if (!subscription) {
       return NextResponse.json(
@@ -52,15 +51,9 @@ export async function POST(request: Request) {
       );
     }
 
-    subscription.status = 'active';
-    await subscription.save();
-
-    return NextResponse.json({
-      success: true,
-      message: 'Subscription activated successfully',
-    });
+    return NextResponse.json({ subscription });
   } catch (error) {
-    console.error('Subscription verification error:', error);
+    console.error('Error verifying subscription:', error);
     return NextResponse.json(
       { error: 'Failed to verify subscription' },
       { status: 500 }

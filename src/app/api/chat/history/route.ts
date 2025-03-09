@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import connectDB from '@/lib/db';
-import Message from '@/models/Message';
+import { connectDB } from '@/lib/db';
+import { MessageModel } from '@/models/Message';
 import { verifyToken } from '@/lib/jwt';
 
 export async function GET(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -26,22 +25,24 @@ export async function GET(request: Request) {
 
     await connectDB();
 
-    const messages = await Message.find({ userId: decoded.id })
-      .sort({ createdAt: 1 })
-      .select('content role createdAt');
+    const messages = await MessageModel.find({ userId: decoded.id })
+      .sort({ createdAt: -1 })
+      .select('_id content role createdAt chatId')
+      .exec();
 
     return NextResponse.json({
       messages: messages.map(msg => ({
-        id: msg._id,
+        id: msg._id.toString(),
         content: msg.content,
         role: msg.role,
         createdAt: msg.createdAt,
+        chatId: msg.chatId.toString(),
       })),
     });
   } catch (error) {
-    console.error('History error:', error);
+    console.error('Error fetching message history:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch message history' },
       { status: 500 }
     );
   }

@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { connectDB } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
-import { createSubscription } from '@/lib/razorpay';
-import connectDB from '@/lib/db';
-import Subscription from '@/models/Subscription';
+import { SubscriptionModel } from '@/models/Subscription';
 
 export async function POST(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -25,30 +23,31 @@ export async function POST(request: Request) {
       );
     }
 
+    const { plan, paymentId } = await request.json();
+
+    if (!plan) {
+      return NextResponse.json(
+        { error: 'Subscription plan is required' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
-    const { planId } = await request.json();
-    
-    // Create subscription in Razorpay
-    const razorpaySubscription = await createSubscription(planId);
+    // Calculate end date (30 days from now)
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 30);
 
-    // Create subscription record in database
-    const subscription = new Subscription({
+    const subscription = await SubscriptionModel.create({
       userId: decoded.id,
-      planId,
-      razorpaySubscriptionId: razorpaySubscription.id,
-      status: 'pending',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      plan,
+      paymentId,
+      endDate,
     });
 
-    await subscription.save();
-
-    return NextResponse.json({
-      subscriptionId: razorpaySubscription.id,
-    });
+    return NextResponse.json({ subscription });
   } catch (error) {
-    console.error('Subscription creation error:', error);
+    console.error('Error creating subscription:', error);
     return NextResponse.json(
       { error: 'Failed to create subscription' },
       { status: 500 }
