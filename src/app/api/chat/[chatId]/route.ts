@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { connectDB } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
-import { Chat } from '@/models/Chat';
-import { Message } from '@/models/Message';
+import { ChatModel } from '@/models/Chat';
+import { MessageModel } from '@/models/Message';
 
 export async function PATCH(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -20,20 +19,33 @@ export async function PATCH(
       );
     }
 
-    const payload = verifyToken(token);
-    if (!payload?.id) {
+    const decoded = verifyToken(token);
+    if (!decoded || !decoded.id) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       );
     }
 
+    const { title } = await request.json();
+
+    if (!title) {
+      return NextResponse.json(
+        { error: 'Title is required' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
-    const chat = await Chat.findOne({
-      _id: params.chatId,
-      userId: payload.id,
-    });
+    const chat = await ChatModel.findOneAndUpdate(
+      {
+        _id: params.chatId,
+        userId: decoded.id,
+      },
+      { title },
+      { new: true }
+    );
 
     if (!chat) {
       return NextResponse.json(
@@ -42,26 +54,11 @@ export async function PATCH(
       );
     }
 
-    const updates = await request.json();
-    const allowedUpdates = ['title', 'isPinned', 'isArchived'];
-    const filteredUpdates = Object.keys(updates)
-      .filter(key => allowedUpdates.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = updates[key];
-        return obj;
-      }, {} as Record<string, any>);
-
-    const updatedChat = await Chat.findByIdAndUpdate(
-      params.chatId,
-      filteredUpdates,
-      { new: true }
-    );
-
-    return NextResponse.json({ chat: updatedChat });
+    return NextResponse.json({ chat });
   } catch (error) {
-    console.error('Error in PATCH /api/chat/[chatId]:', error);
+    console.error('Error updating chat:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update chat' },
       { status: 500 }
     );
   }
@@ -72,7 +69,7 @@ export async function DELETE(
   { params }: { params: { chatId: string } }
 ) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -82,8 +79,8 @@ export async function DELETE(
       );
     }
 
-    const payload = verifyToken(token);
-    if (!payload?.id) {
+    const decoded = verifyToken(token);
+    if (!decoded || !decoded.id) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
@@ -92,9 +89,10 @@ export async function DELETE(
 
     await connectDB();
 
-    const chat = await Chat.findOne({
+    // Delete chat
+    const chat = await ChatModel.findOneAndDelete({
       _id: params.chatId,
-      userId: payload.id,
+      userId: decoded.id,
     });
 
     if (!chat) {
@@ -105,16 +103,18 @@ export async function DELETE(
     }
 
     // Delete all messages in the chat
-    await Message.deleteMany({ chatId: params.chatId });
+    await MessageModel.deleteMany({
+      chatId: params.chatId,
+      userId: decoded.id,
+    });
 
-    // Delete the chat
-    await Chat.findByIdAndDelete(params.chatId);
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      message: 'Chat and messages deleted successfully',
+    });
   } catch (error) {
-    console.error('Error in DELETE /api/chat/[chatId]:', error);
+    console.error('Error deleting chat:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to delete chat' },
       { status: 500 }
     );
   }

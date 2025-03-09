@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { connectDB } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
-import { Chat } from '@/models/Chat';
+import { ChatModel } from '@/models/Chat';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = new Headers(request.headers);
     const token = headersList.get('authorization')?.split(' ')[1];
 
     if (!token) {
@@ -16,8 +15,8 @@ export async function GET() {
       );
     }
 
-    const payload = verifyToken(token);
-    if (!payload?.id) {
+    const decoded = verifyToken(token);
+    if (!decoded || !decoded.id) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
@@ -26,15 +25,23 @@ export async function GET() {
 
     await connectDB();
 
-    const chats = await Chat.find({ userId: payload.id })
-      .sort({ isPinned: -1, updatedAt: -1 })
-      .lean();
+    const chats = await ChatModel.find({ userId: decoded.id })
+      .sort({ updatedAt: -1 })
+      .select('_id title createdAt updatedAt')
+      .exec();
 
-    return NextResponse.json({ chats });
+    return NextResponse.json({
+      chats: chats.map(chat => ({
+        id: chat._id.toString(),
+        title: chat.title,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt,
+      })),
+    });
   } catch (error) {
-    console.error('Error in GET /api/chat/list:', error);
+    console.error('Error fetching chats:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch chats' },
       { status: 500 }
     );
   }
