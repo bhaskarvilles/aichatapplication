@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { User } from '@/models/User';
+import { UserModel } from '@/models/User';
 import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 
@@ -8,8 +8,7 @@ export async function POST(request: Request) {
   try {
     await connectDB();
 
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await request.json();
 
     // Validate input
     if (!email || !password) {
@@ -26,8 +25,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Find user and explicitly select password
+    const user = await UserModel.findOne({ email }).select('+password');
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -36,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.comparePassword(password);
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -45,18 +44,19 @@ export async function POST(request: Request) {
     }
 
     // Generate token
-    const token = signToken({
+    const token = signToken({ 
       id: user._id.toString(),
-      email: user.email,
+      email: user.email 
     });
 
+    // Return user info and token
     return NextResponse.json({
-      token,
       user: {
-        id: user._id.toString(),
+        id: user._id,
         email: user.email,
         name: user.name,
       },
+      token,
     });
   } catch (error) {
     console.error('Login error:', {

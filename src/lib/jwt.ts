@@ -1,11 +1,5 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
-}
-
 export interface JWTPayload {
   id: string;
   email: string;
@@ -13,38 +7,16 @@ export interface JWTPayload {
   exp?: number;
 }
 
-export const signToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+export function signToken(payload: Omit<JWTPayload, 'iat' | 'exp'>) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+export function verifyToken(token: string): JWTPayload {
   try {
-    return jwt.sign(payload, JWT_SECRET, {
-      expiresIn: '24h',
-    });
+    return jwt.verify(token, JWT_SECRET) as JWTPayload;
   } catch (error) {
-    console.error('Error signing JWT:', error);
-    throw new Error('Failed to generate authentication token');
+    throw new Error('Invalid token');
   }
-};
-
-export const verifyToken = (token: string): JWTPayload | null => {
-  try {
-    if (!token) {
-      console.error('No token provided');
-      return null;
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    if (typeof decoded !== 'object' || !decoded.id || !decoded.email) {
-      console.error('Invalid token payload');
-      return null;
-    }
-
-    return decoded as JWTPayload;
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      console.error('JWT verification error:', error.message);
-    } else {
-      console.error('Unexpected error during token verification:', error);
-    }
-    return null;
-  }
-}; 
+} 
