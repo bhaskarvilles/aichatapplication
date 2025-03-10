@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: kerdos-ai-chat-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        value: mongodb+srv://bhaskarvilles:zGuGLAZDdum0v2E5@aichatapp.iz5v9.mongodb.net/?retryWrites=true&w=majority&appName=aichatapp
+      - key: AUTH0_DOMAIN
+        value: kerdos.us.auth0.com
+      - key: AUTH0_AUDIENCE
+        value: https://ai-chat-backend-ujxv.onrender.com
+      - key: CORS_ORIGIN
+        value: https://ai-chat-kerdos.netlify.app 
