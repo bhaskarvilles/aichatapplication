@@ -1,45 +1,78 @@
 import { ReactNode } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Button } from '../ui/button';
-import { ThemeToggle } from '../theme-toggle';
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  IconButton,
+  Toolbar,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-export function Layout({ children }: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
+  const theme = useTheme();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <h1 className="text-2xl font-bold">Kerdos AI Chat</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <>
-                <span className="text-sm text-muted-foreground">
-                  Welcome, {user?.name}
-                </span>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <AppBar position="sticky" elevation={1}>
+        <Container maxWidth="lg">
+          <Toolbar disableGutters>
+            <Typography
+              variant="h6"
+              component="h1"
+              sx={{ flexGrow: 1, fontWeight: 600 }}
+            >
+              Kerdos AI Chat
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              {isAuthenticated ? (
+                <>
+                  <Typography variant="body2" color="inherit">
+                    Welcome, {user?.name}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    onClick={() =>
+                      logout({ logoutParams: { returnTo: window.location.origin } })
+                    }
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
                 <Button
-                  variant="outline"
-                  onClick={() =>
-                    logout({ logoutParams: { returnTo: window.location.origin } })
-                  }
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => loginWithRedirect()}
                 >
-                  Logout
+                  Login
                 </Button>
-              </>
-            ) : (
-              <Button onClick={() => loginWithRedirect()}>Login</Button>
-            )}
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-      <main className="container py-6">{children}</main>
-    </div>
+              )}
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+      <Container
+        component="main"
+        maxWidth="lg"
+        sx={{
+          flexGrow: 1,
+          py: 4,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {children}
+      </Container>
+    </Box>
   );
 } 

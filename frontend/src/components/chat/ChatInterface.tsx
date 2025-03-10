@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { ScrollArea } from '../ui/scroll-area';
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
+import { Send as SendIcon } from '@mui/icons-material';
 
 interface Message {
   id: string;
@@ -12,7 +19,7 @@ interface Message {
   timestamp: Date;
 }
 
-export function ChatInterface() {
+export default function ChatInterface() {
   const { getAccessTokenSilently } = useAuth0();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -61,45 +68,72 @@ export function ChatInterface() {
   };
 
   return (
-    <Card className="flex h-[600px] flex-col">
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+    <Card sx={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1, overflow: 'auto', p: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {messages.map((message) => (
-            <div
+            <Box
               key={message.id}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              sx={{
+                display: 'flex',
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              }}
             >
-              <div
-                className={`rounded-lg px-4 py-2 ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
+              <Paper
+                elevation={1}
+                sx={{
+                  p: 2,
+                  maxWidth: '70%',
+                  bgcolor: message.role === 'user' ? 'primary.main' : 'grey.100',
+                  color: message.role === 'user' ? 'white' : 'text.primary',
+                  borderRadius: 2,
+                }}
               >
-                <p>{message.content}</p>
-                <span className="text-xs opacity-50">
+                <Typography variant="body1">{message.content}</Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: 'block',
+                    mt: 1,
+                    opacity: 0.7,
+                  }}
+                >
                   {message.timestamp.toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Paper>
+            </Box>
           ))}
-        </div>
-      </ScrollArea>
-      <form onSubmit={sendMessage} className="border-t p-4">
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading}
-          />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send'}
-          </Button>
-        </div>
-      </form>
+        </Box>
+      </CardContent>
+      <Box
+        component="form"
+        onSubmit={sendMessage}
+        sx={{
+          p: 2,
+          borderTop: 1,
+          borderColor: 'divider',
+          display: 'flex',
+          gap: 2,
+        }}
+      >
+        <TextField
+          fullWidth
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message..."
+          disabled={isLoading}
+          variant="outlined"
+          size="small"
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isLoading}
+          endIcon={isLoading ? <CircularProgress size={20} /> : <SendIcon />}
+        >
+          Send
+        </Button>
+      </Box>
     </Card>
   );
 } 
